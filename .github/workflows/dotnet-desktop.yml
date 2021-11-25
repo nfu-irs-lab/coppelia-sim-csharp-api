@@ -1,0 +1,47 @@
+
+
+name: .NET Core Desktop
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Setup NuGet
+      uses: nuget/setup-nuget@v1
+      with:
+        nuget-api-key: ${{ secrets.NuGetAPIKey }}
+        nuget-version: '5.x'
+
+    - name: Build the solution
+      run: msbuild /p:Configuration=$env:Configuration -restore
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    - name: Execute unit tests
+      run: dotnet test -c $env:Configuration
+      env:
+        Configuration: ${{ matrix.configuration }}
